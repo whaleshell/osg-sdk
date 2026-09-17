@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zorneth/osg-runtime/gatewayclient"
+	"github.com/zorneth/osg-sdk/gatewayclient"
 )
 
 // ErrConnectUnsupported means interactive sessions stay on the CLI.
