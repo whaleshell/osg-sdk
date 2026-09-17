@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -506,6 +507,107 @@ func (c *Client) PostLogs(ctx context.Context, sandbox string, lines []LogLine) 
 		return fmt.Errorf("gateway post logs: %s: %s", res.Status, bytes.TrimSpace(body))
 	}
 	return nil
+}
+
+// Proposal is a policy.local chunk stored on the gateway.
+type Proposal struct {
+	ID               string    `json:"id"`
+	Sandbox          string    `json:"sandbox"`
+	Status           string    `json:"status"`
+	IntentSummary    string    `json:"intent_summary,omitempty"`
+	RuleName         string    `json:"rule_name,omitempty"`
+	RuleYAML         string    `json:"rule_yaml,omitempty"`
+	Hosts            []string  `json:"hosts,omitempty"`
+	RejectionReason  string    `json:"rejection_reason,omitempty"`
+	ValidationResult string    `json:"validation_result,omitempty"`
+	CreatedAt        time.Time `json:"created_at"`
+	DecidedAt        time.Time `json:"decided_at,omitempty"`
+}
+
+// ListProposals GET /v1/sandboxes/{name}/proposals.
+func (c *Client) ListProposals(ctx context.Context, sandbox, status string) ([]Proposal, error) {
+	path := "/v1/sandboxes/" + sandbox + "/proposals"
+	if status != "" {
+		path += "?status=" + url.QueryEscape(status)
+	}
+	var out struct {
+		Proposals []Proposal `json:"proposals"`
+	}
+	if err := c.get(ctx, path, &out); err != nil {
+		return nil, err
+	}
+	return out.Proposals, nil
+}
+
+// GetProposal GET /v1/sandboxes/{name}/proposals/{id}.
+func (c *Client) GetProposal(ctx context.Context, sandbox, id string) (Proposal, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.Base+"/v1/sandboxes/"+sandbox+"/proposals/"+id, nil)
+	if err != nil {
+		return Proposal{}, err
+	}
+	c.auth(req)
+	res, err := c.HTTP.Do(req)
+	if err != nil {
+		return Proposal{}, err
+	}
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+	if res.StatusCode >= 300 {
+		return Proposal{}, fmt.Errorf("get proposal: %s: %s", res.Status, bytes.TrimSpace(body))
+	}
+	var p Proposal
+	if err := json.Unmarshal(body, &p); err != nil {
+		return Proposal{}, err
+	}
+	return p, nil
+}
+
+// ApproveProposal POST /v1/sandboxes/{name}/proposals/{id}/approve — merges rule into base.
+func (c *Client) ApproveProposal(ctx context.Context, sandbox, id string) (Proposal, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.Base+"/v1/sandboxes/"+sandbox+"/proposals/"+id+"/approve", nil)
+	if err != nil {
+		return Proposal{}, err
+	}
+	c.auth(req)
+	res, err := c.HTTP.Do(req)
+	if err != nil {
+		return Proposal{}, err
+	}
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+	if res.StatusCode >= 300 {
+		return Proposal{}, fmt.Errorf("approve proposal: %s: %s", res.Status, bytes.TrimSpace(body))
+	}
+	var p Proposal
+	if err := json.Unmarshal(body, &p); err != nil {
+		return Proposal{}, err
+	}
+	return p, nil
+}
+
+// RejectProposal POST /v1/sandboxes/{name}/proposals/{id}/reject.
+func (c *Client) RejectProposal(ctx context.Context, sandbox, id, reason string) (Proposal, error) {
+	b, _ := json.Marshal(map[string]string{"reason": reason})
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.Base+"/v1/sandboxes/"+sandbox+"/proposals/"+id+"/reject", bytes.NewReader(b))
+	if err != nil {
+		return Proposal{}, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	c.auth(req)
+	res, err := c.HTTP.Do(req)
+	if err != nil {
+		return Proposal{}, err
+	}
+	defer res.Body.Close()
+	body, _ := io.ReadAll(res.Body)
+	if res.StatusCode >= 300 {
+		return Proposal{}, fmt.Errorf("reject proposal: %s: %s", res.Status, bytes.TrimSpace(body))
+	}
+	var p Proposal
+	if err := json.Unmarshal(body, &p); err != nil {
+		return Proposal{}, err
+	}
+	return p, nil
 }
 
 // LogLine is one observation event for ingest/SSE.
