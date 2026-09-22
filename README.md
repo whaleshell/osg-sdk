@@ -2,7 +2,7 @@
 
 <p align="center">
   <strong>Go client for whaleshell-gateway</strong><br>
-  Thin HTTP client + gatewayclient — no fat runtime dependency.
+  Thin HTTP client (`go/whaleshell`) — no fat runtime dependency.
 </p>
 <p align="center">
   <a href="https://github.com/whaleshell/whaleshell-sdk/actions/workflows/ci.yml"><img src="https://github.com/whaleshell/whaleshell-sdk/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -24,8 +24,7 @@
 
 | Category | Capabilities |
 |----------|--------------|
-| **Client** | `go/whaleshell` ergonomic wrapper |
-| **Low-level** | `gatewayclient` for raw `/v1/*` |
+| **Client** | `go/whaleshell` — public SDK (wraps internal gateway HTTP client) |
 | **Relay** | Long-poll exec against `whaleshell-agent` |
 | **Proposals** | List / get / approve / reject |
 
@@ -69,8 +68,8 @@ func main() {
 
 | Path | Purpose |
 |------|---------|
-| `go/whaleshell` | High-level client |
-| `gatewayclient/` | HTTP API types + calls |
+| `go/whaleshell` | Public Go SDK |
+| `internal/gatewayclient/` | HTTP API implementation (not importable outside the module) |
 
 
 ---
