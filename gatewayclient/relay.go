@@ -24,7 +24,7 @@ func (c *Client) GetSandbox(ctx context.Context, name string) (Sandbox, error) {
 	return sb, nil
 }
 
-// Exec posts argv to the gateway relay (requires osg-agent polling in the sandbox).
+// Exec posts argv to the gateway relay (requires whaleshell-agent polling in the sandbox).
 func (c *Client) Exec(ctx context.Context, name string, argv []string) (ExecResult, error) {
 	body, err := json.Marshal(map[string]any{"argv": argv})
 	if err != nil {

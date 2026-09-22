@@ -1,9 +1,9 @@
-// Package osg is the Go SDK for the osg gateway control plane.
+// Package whaleshell is the Go SDK for the whaleshell gateway control plane.
 //
-// Create/list/delete talk to osg-gateway over HTTP. Exec uses the gateway
-// relay (sandbox must run osg-agent). Interactive TTY connect is not provided
-// here — use the CLI: `osg connect <name>`.
-package osg
+// Create/list/delete talk to whaleshell-gateway over HTTP. Exec uses the gateway
+// relay (sandbox must run whaleshell-agent). Interactive TTY connect is not provided
+// here — use the CLI: `whaleshell connect <name>`.
+package whaleshell
 
 import (
 	"context"
@@ -11,11 +11,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/zorneth/osg-sdk/gatewayclient"
+	"github.com/whaleshell/whaleshell-sdk/gatewayclient"
 )
 
 // ErrConnectUnsupported means interactive sessions stay on the CLI.
-var ErrConnectUnsupported = errors.New("osg-sdk: interactive connect is not supported; use: osg connect <name>")
+var ErrConnectUnsupported = errors.New("whaleshell-sdk: interactive connect is not supported; use: whaleshell connect <name>")
 
 // Client wraps the gateway HTTP API.
 type Client struct {

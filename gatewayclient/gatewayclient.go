@@ -1,4 +1,4 @@
-// Package gatewayclient talks to osg-gateway HTTP API.
+// Package gatewayclient talks to whaleshell-gateway HTTP API.
 package gatewayclient
 
 import (
@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-// Client is a tiny HTTP client for osg-gateway.
+// Client is a tiny HTTP client for whaleshell-gateway.
 type Client struct {
 	Base  string
 	Token string // optional Bearer
@@ -392,7 +392,7 @@ func (c *Client) PutSandboxPolicy(ctx context.Context, sandbox string, baseYAML 
 	if res.StatusCode >= 300 {
 		return nil, 0, fmt.Errorf("gateway policy set: %s: %s", res.Status, bytes.TrimSpace(body))
 	}
-	if v := res.Header.Get("X-Osg-Stripped-Provider-Rules"); v != "" {
+	if v := res.Header.Get("X-Whaleshell-Stripped-Provider-Rules"); v != "" {
 		_, _ = fmt.Sscanf(v, "%d", &stripped)
 	}
 	return body, stripped, nil

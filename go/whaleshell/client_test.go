@@ -1,4 +1,4 @@
-package osg_test
+package whaleshell_test
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/zorneth/osg-sdk/go/osg"
+	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
 )
 
 func TestClientCRUDAndExec(t *testing.T) {
@@ -36,13 +36,13 @@ func TestClientCRUDAndExec(t *testing.T) {
 	srv := httptest.NewServer(mux)
 	defer srv.Close()
 
-	c := osg.New(srv.URL)
+	c := whaleshell.New(srv.URL)
 	ctx := context.Background()
 	hz, err := c.Healthz(ctx)
 	if err != nil || hz["ok"] != true {
 		t.Fatalf("healthz=%v err=%v", hz, err)
 	}
-	if err := c.Create(ctx, osg.Sandbox{Name: "demo", Status: "running"}); err != nil {
+	if err := c.Create(ctx, whaleshell.Sandbox{Name: "demo", Status: "running"}); err != nil {
 		t.Fatal(err)
 	}
 	list, err := c.List(ctx)
@@ -57,7 +57,7 @@ func TestClientCRUDAndExec(t *testing.T) {
 	if err != nil || res.ExitCode != 0 || res.Output != "hi\n" {
 		t.Fatalf("exec=%v err=%v", res, err)
 	}
-	if err := c.Connect(ctx, "demo"); err != osg.ErrConnectUnsupported {
+	if err := c.Connect(ctx, "demo"); err != whaleshell.ErrConnectUnsupported {
 		t.Fatalf("connect err=%v", err)
 	}
 	if err := c.Delete(ctx, "demo"); err != nil {
