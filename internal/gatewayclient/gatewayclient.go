@@ -22,11 +22,31 @@ type Client struct {
 }
 
 // New returns a client for base URL (for example http://127.0.0.1:7443).
+// The gateway requires a bearer on every /v1 route; set Token (or use
+// NewWithToken) — it is attached to every request by the transport.
 func New(base string) *Client {
-	return &Client{
-		Base: strings.TrimRight(base, "/"),
-		HTTP: &http.Client{Timeout: 10 * time.Second},
+	c := &Client{Base: strings.TrimRight(base, "/")}
+	c.HTTP = &http.Client{Timeout: 10 * time.Second, Transport: &authTransport{c: c}}
+	return c
+}
+
+// authTransport adds the bearer to requests that do not carry one, so no
+// call site can forget authentication.
+type authTransport struct {
+	c    *Client
+	base http.RoundTripper
+}
+
+func (t *authTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	base := t.base
+	if base == nil {
+		base = http.DefaultTransport
 	}
+	if tok := t.c.Token; tok != "" && req.Header.Get("Authorization") == "" {
+		req = req.Clone(req.Context())
+		req.Header.Set("Authorization", "Bearer "+tok)
+	}
+	return base.RoundTrip(req)
 }
 
 // NewWithToken returns a client with bearer auth.

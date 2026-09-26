@@ -1,12 +1,9 @@
 package gatewayclient
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
-	"fmt"
-	"io"
 	"net/http"
+	"net/url"
 )
 
 // ExecResult is the relay exec response.
@@ -24,29 +21,10 @@ func (c *Client) GetSandbox(ctx context.Context, name string) (Sandbox, error) {
 	return sb, nil
 }
 
-// Exec posts argv to the gateway relay (requires whaleshell-agent polling in the sandbox).
+// Exec runs argv in the sandbox over the supervisor SSH relay (OpenShell
+// ExecSandbox). Returns ErrSandboxNotReady when the relay is not connected.
 func (c *Client) Exec(ctx context.Context, name string, argv []string) (ExecResult, error) {
-	body, err := json.Marshal(map[string]any{"argv": argv})
-	if err != nil {
-		return ExecResult{}, err
-	}
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.Base+"/v1/relay/"+name+"/exec", bytes.NewReader(body))
-	if err != nil {
-		return ExecResult{}, err
-	}
-	req.Header.Set("Content-Type", "application/json")
-	res, err := c.HTTP.Do(req)
-	if err != nil {
-		return ExecResult{}, err
-	}
-	defer res.Body.Close()
-	b, _ := io.ReadAll(res.Body)
-	if res.StatusCode >= 300 {
-		return ExecResult{}, fmt.Errorf("gateway relay exec: %s: %s", res.Status, bytes.TrimSpace(b))
-	}
 	var out ExecResult
-	if err := json.Unmarshal(b, &out); err != nil {
-		return ExecResult{}, err
-	}
-	return out, nil
+	err := c.do(ctx, http.MethodPost, "/v1/sandboxes/"+url.PathEscape(name)+"/exec", map[string]any{"argv": argv}, http.StatusOK, &out)
+	return out, err
 }
